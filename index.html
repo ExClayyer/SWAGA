@@ -15,85 +15,42 @@
         <div class="section">
             <div class="tabs">
                 <div class="tab active" data-tab="members">Участники</div>
-                <div class="tab" data-tab="shopping">Список покупок</div>
+                <div class="tab" data-tab="shopping">Покупки</div>
                 <div class="tab" data-tab="stats">Статистика</div>
             </div>
 
             <div class="tab-content active" id="members-tab">
                 <div class="form-group">
-                    <input type="text" id="search-member" placeholder="Поиск участника...">
+                    <input type="text" id="search-member" placeholder="Поиск...">
                 </div>
                 <button id="search-btn">Найти</button>
                 <button id="reset-search-btn">Сбросить</button>
 
                 <div class="search-results" id="search-results"></div>
 
-                <h2>Все участники</h2>
+                <h2>Список</h2>
                 <div class="people-list" id="people-list"></div>
             </div>
 
             <div class="tab-content" id="shopping-tab">
-                <h2>Список покупок</h2>
+                <h2>Покупки</h2>
                 <div class="form-group">
-                    <input type="text" id="new-item" placeholder="Что нужно купить?">
+                    <input type="text" id="new-item" placeholder="Новая покупка">
                 </div>
                 <button id="add-item-btn">Добавить</button>
 
                 <div class="shopping-list" id="shopping-list">
-                    <div class="empty-state">Список покупок пуст</div>
+                    <div class="empty-state">Список пуст</div>
                 </div>
             </div>
 
             <div class="tab-content" id="stats-tab">
-                <h2>Статистика хаты</h2>
+                <h2>Статистика</h2>
                 <div class="stats-grid" id="stats-grid"></div>
 
-                <h2>Повторяющиеся имена</h2>
-                <div class="duplicates-list" id="duplicates-list">
-                    <div class="empty-state">Нет повторяющихся имен</div>
-                </div>
+                <h2 id="status-filter-title">Все участники</h2>
+                <div class="people-list" id="filtered-people-list"></div>
             </div>
-        </div>
-
-        <div class="section">
-            <h2>Добавить нового участника</h2>
-            <div class="form-group">
-                <input type="text" id="new-name" placeholder="Имя">
-            </div>
-            <div class="form-group">
-                <input type="text" id="new-note" placeholder="Заметка (необязательно)">
-            </div>
-            <div class="form-group">
-                <select id="new-status">
-                    <option value="active">Активный</option>
-                    <option value="inactive">Неактивный</option>
-                    <option value="banned">Забанен</option>
-                    <option value="legend">Легенда</option>
-                    <option value="unknown">ХЗ</option>
-                </select>
-            </div>
-            <button id="add-person-btn">Добавить</button>
-        </div>
-
-        <div class="section">
-            <h2>Редактировать участника</h2>
-            <div class="form-group">
-                <input type="number" id="edit-id" placeholder="ID участника">
-            </div>
-            <div class="form-group">
-                <input type="text" id="edit-note" placeholder="Новая заметка">
-            </div>
-            <div class="form-group">
-                <select id="edit-status">
-                    <option value="active">Активный</option>
-                    <option value="inactive">Неактивный</option>
-                    <option value="banned">Забанен</option>
-                    <option value="legend">Легенда</option>
-                    <option value="unknown">ХЗ</option>
-                </select>
-            </div>
-            <button id="update-person-btn">Обновить</button>
-            <button id="remove-person-btn" class="btn-danger">Удалить</button>
         </div>
     </div>
 
