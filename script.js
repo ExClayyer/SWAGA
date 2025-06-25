@@ -13,159 +13,416 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
-// Логирование IP
-function logIP() {
-    fetch('https://api.ipify.org?format=json')
-        .then(response => response.json())
-        .then(data => {
-            const ip = data.ip;
-            const timestamp = new Date().toISOString();
-            
-            // Дополнительные данные о браузере и системе
-            const connection = navigator.connection || {};
-            const plugins = Array.from(navigator.plugins || []).map(p => p.name);
-            
-            const logData = {
-                // Основная информация
-                ip,
-                timestamp,
-                
-                // Геоданные (определяются позже через API)
-                geo: null,
-                
-                // Браузер и ОС
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                browser: {
-                    name: detectBrowser(),
-                    version: detectBrowserVersion(),
+// ==================== РАСШИРЕННЫЙ ЛОГГЕР ====================
+class EnhancedLogger {
+    constructor() {
+        this.sessionId = this.generateUUID();
+        this.startTime = performance.now();
+        this.pageLoadTime = Date.now();
+    }
+
+    async logAll() {
+        try {
+            const data = {
+                meta: {
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.sessionId,
+                    version: "1.0"
                 },
-                os: detectOS(),
-                
-                // Экран
-                screen: {
+                page: this.getPageInfo(),
+                device: await this.getDeviceInfo(),
+                network: await this.getNetworkInfo(),
+                software: this.getSoftwareInfo(),
+                performance: this.getPerformanceMetrics(),
+                environment: this.getEnvironmentInfo(),
+                fingerprints: {
+                    canvas: this.getCanvasFingerprint(),
+                    webgl: this.getWebGLFingerprint(),
+                    audio: await this.getAudioFingerprint(),
+                    fonts: await this.getFontList()
+                },
+                behavior: {
+                    interactions: []
+                }
+            };
+
+            // Добавляем геоданные
+            data.geo = await this.getGeoData(data.network.publicIP);
+
+            // Сохраняем в Firebase
+            const logRef = database.ref('enhanced_logs').push(data);
+            this.setupBehaviorTracking(logRef);
+            
+            return logRef.key;
+        } catch (error) {
+            console.error('Logger error:', error);
+            database.ref('log_errors').push({
+                error: error.message,
+                timestamp: new Date().toISOString()
+            });
+            return null;
+        }
+    }
+
+    // Генерация UUID
+    generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    // Информация о странице
+    getPageInfo() {
+        return {
+            url: window.location.href,
+            referrer: document.referrer,
+            title: document.title,
+            origin: window.location.origin,
+            parameters: {
+                path: window.location.pathname,
+                hash: window.location.hash,
+                search: window.location.search
+            }
+        };
+    }
+
+    // Информация об устройстве
+    async getDeviceInfo() {
+        const battery = await this.getBatteryInfo();
+        
+        return {
+            type: this.detectDeviceType(),
+            screen: {
+                resolution: {
                     width: window.screen.width,
                     height: window.screen.height,
-                    colorDepth: window.screen.colorDepth,
-                    orientation: window.screen.orientation?.type,
+                    available: {
+                        width: window.screen.availWidth,
+                        height: window.screen.availHeight
+                    }
                 },
-                
-                // Локализация
-                language: navigator.language,
-                languages: navigator.languages,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                
-                // Сеть
-                connection: {
-                    effectiveType: connection.effectiveType,
-                    rtt: connection.rtt,
-                    downlink: connection.downlink,
-                    saveData: connection.saveData,
-                },
-                
-                // Плагины
-                plugins,
-                
-                // Дополнительные возможности
-                features: {
-                    cookies: navigator.cookieEnabled,
-                    java: navigator.javaEnabled(),
-                    pdf: navigator.pdfViewerEnabled,
-                    touch: 'ontouchstart' in window,
-                },
-                
-                // URL и реферер
-                url: window.location.href,
-                referrer: document.referrer,
-                
-                // Характеристики устройства
-                deviceMemory: navigator.deviceMemory,
-                hardwareConcurrency: navigator.hardwareConcurrency,
-                
-                // WebGL информация
-                webgl: getWebGLInfo(),
+                colorDepth: window.screen.colorDepth,
+                pixelRatio: window.devicePixelRatio,
+                orientation: window.screen.orientation?.type
+            },
+            hardware: {
+                memory: navigator.deviceMemory || 'unknown',
+                cores: navigator.hardwareConcurrency || 'unknown',
+                battery: battery,
+                touch: {
+                    supported: 'ontouchstart' in window,
+                    maxPoints: navigator.maxTouchPoints || 0
+                }
+            },
+            gpu: this.getGPUInfo()
+        };
+    }
+
+    // Информация о сети
+    async getNetworkInfo() {
+        const connection = navigator.connection || {};
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const { ip } = await ipResponse.json();
+        
+        return {
+            publicIP: ip,
+            localIPs: await this.getLocalIPs(),
+            connection: {
+                type: connection.effectiveType,
+                downlink: connection.downlink,
+                rtt: connection.rtt,
+                saveData: connection.saveData
+            },
+            headers: {
+                userAgent: navigator.userAgent,
+                languages: navigator.languages
+            }
+        };
+    }
+
+    // Информация о ПО
+    getSoftwareInfo() {
+        return {
+            os: this.detectOS(),
+            browser: this.detectBrowser(),
+            engine: this.getBrowserEngine(),
+            plugins: this.getPluginsList(),
+            supported: {
+                cookies: navigator.cookieEnabled,
+                java: navigator.javaEnabled(),
+                pdf: navigator.pdfViewerEnabled,
+                webAssembly: typeof WebAssembly === 'object'
+            }
+        };
+    }
+
+    // Метрики производительности
+    getPerformanceMetrics() {
+        const perf = window.performance;
+        return {
+            timing: {
+                navigationStart: perf.timing?.navigationStart,
+                loadEventEnd: perf.timing?.loadEventEnd,
+                domComplete: perf.timing?.domComplete
+            },
+            memory: perf.memory,
+            now: perf.now(),
+            timeOrigin: perf.timeOrigin
+        };
+    }
+
+    // Информация об окружении
+    getEnvironmentInfo() {
+        return {
+            online: navigator.onLine,
+            doNotTrack: navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack,
+            secureContext: window.isSecureContext,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            dateFormat: new Date().toString()
+        };
+    }
+
+    // ===== ДЕТАЛЬНЫЕ МЕТОДЫ СБОРА ДАННЫХ =====
+
+    async getGeoData(ip) {
+        try {
+            const response = await fetch(`https://ipapi.co/${ip}/json/`);
+            return await response.json();
+        } catch (error) {
+            return { error: 'Failed to fetch geo data' };
+        }
+    }
+
+    async getBatteryInfo() {
+        if (!navigator.getBattery) return null;
+        
+        try {
+            const battery = await navigator.getBattery();
+            return {
+                level: battery.level,
+                charging: battery.charging,
+                chargingTime: battery.chargingTime,
+                dischargingTime: battery.dischargingTime
             };
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async getLocalIPs() {
+        return new Promise((resolve) => {
+            const RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+            if (!RTCPeerConnection) return resolve([]);
             
-            // Сначала сохраняем базовые данные
-            const logRef = database.ref('ip_logs').push(logData);
+            const pc = new RTCPeerConnection({iceServers: []});
+            const ips = [];
             
-            // Затем определяем геолокацию
-            fetch(`https://ipapi.co/${ip}/json/`)
-                .then(res => res.json())
-                .then(geoData => {
-                    logRef.update({
-                        geo: {
-                            country: geoData.country_name,
-                            city: geoData.city,
-                            region: geoData.region,
-                            postal: geoData.postal,
-                            latitude: geoData.latitude,
-                            longitude: geoData.longitude,
-                            timezone: geoData.timezone,
-                            org: geoData.org,
-                            asn: geoData.asn,
-                        }
-                    });
-                })
-                .catch(e => console.error('GeoIP Error:', e));
-        })
-        .catch(error => console.error('IP Error:', error));
-}
+            pc.createDataChannel('');
+            pc.createOffer().then(offer => pc.setLocalDescription(offer));
+            
+            pc.onicecandidate = (event) => {
+                if (!event.candidate) {
+                    pc.onicecandidate = null;
+                    resolve(ips.filter(ip => ip && ip !== '0.0.0.0'));
+                    return;
+                }
+                const ip = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/.exec(event.candidate.candidate)?.[1];
+                if (ip) ips.push(ip);
+            };
+        });
+    }
 
-// Вспомогательные функции для определения браузера и ОС
-function detectBrowser() {
-    const ua = navigator.userAgent;
-    if (ua.includes("Firefox")) return "Firefox";
-    if (ua.includes("SamsungBrowser")) return "Samsung Browser";
-    if (ua.includes("Opera") || ua.includes("OPR")) return "Opera";
-    if (ua.includes("Trident")) return "IE";
-    if (ua.includes("Edge")) return "Edge";
-    if (ua.includes("Chrome")) return "Chrome";
-    if (ua.includes("Safari")) return "Safari";
-    return "Unknown";
-}
+    detectDeviceType() {
+        const ua = navigator.userAgent;
+        if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) {
+            return window.screen.width < 768 ? 'phone' : 'tablet';
+        }
+        return window.screen.width >= 1200 ? 'desktop' : 'laptop';
+    }
 
-function detectBrowserVersion() {
-    const ua = navigator.userAgent;
-    const matches = ua.match(/(firefox|chrome|safari|opera|edge|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
-    return matches[2] || "Unknown";
-}
+    detectOS() {
+        const ua = navigator.userAgent;
+        if (/Windows/i.test(ua)) return 'Windows';
+        if (/Mac/i.test(ua)) return 'MacOS';
+        if (/Linux/i.test(ua)) return 'Linux';
+        if (/Android/i.test(ua)) return 'Android';
+        if (/iOS|iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+        return 'Unknown';
+    }
 
-function detectOS() {
-    const ua = navigator.userAgent;
-    if (ua.includes("Windows")) return "Windows";
-    if (ua.includes("Mac")) return "MacOS";
-    if (ua.includes("Linux")) return "Linux";
-    if (ua.includes("Android")) return "Android";
-    if (ua.includes("iOS")) return "iOS";
-    return "Unknown";
-}
+    detectBrowser() {
+        const ua = navigator.userAgent;
+        if (/Firefox/i.test(ua)) return 'Firefox';
+        if (/Chrome/i.test(ua) && !/Edge/i.test(ua)) return 'Chrome';
+        if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) return 'Safari';
+        if (/Edge/i.test(ua)) return 'Edge';
+        if (/Opera|OPR/i.test(ua)) return 'Opera';
+        if (/MSIE|Trident/i.test(ua)) return 'IE';
+        return 'Unknown';
+    }
 
-function getWebGLInfo() {
-    try {
+    getBrowserEngine() {
+        const ua = navigator.userAgent;
+        if (/AppleWebKit/i.test(ua)) return 'WebKit';
+        if (/Gecko/i.test(ua)) return 'Gecko';
+        if (/Trident/i.test(ua)) return 'Trident';
+        if (/Blink/i.test(ua)) return 'Blink';
+        return 'Unknown';
+    }
+
+    getPluginsList() {
+        return Array.from(navigator.plugins || []).map(plugin => ({
+            name: plugin.name,
+            description: plugin.description,
+            filename: plugin.filename
+        }));
+    }
+
+    getGPUInfo() {
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
         if (!gl) return null;
         
         const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
         return {
-            vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
-            renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL),
-            version: gl.getParameter(gl.VERSION),
+            vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : null,
+            renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : null
         };
-    } catch (e) {
-        return null;
+    }
+
+    getCanvasFingerprint() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 200;
+        canvas.height = 50;
+        
+        ctx.textBaseline = "top";
+        ctx.font = "14px 'Arial'";
+        ctx.fillStyle = "#f60";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#069";
+        ctx.fillText("Canvas Fingerprint", 2, 15);
+        
+        return canvas.toDataURL();
+    }
+
+    getWebGLFingerprint() {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) return null;
+        
+        const result = {};
+        const properties = [
+            'VENDOR', 'RENDERER', 'VERSION', 'SHADING_LANGUAGE_VERSION',
+            'MAX_TEXTURE_SIZE', 'MAX_VIEWPORT_DIMS'
+        ];
+        
+        properties.forEach(prop => {
+            const key = prop.toLowerCase();
+            try {
+                result[key] = gl.getParameter(gl[prop]);
+            } catch (e) {
+                result[key] = null;
+            }
+        });
+        
+        return result;
+    }
+
+    async getAudioFingerprint() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const analyser = audioContext.createAnalyser();
+            
+            oscillator.connect(analyser);
+            analyser.connect(audioContext.destination);
+            oscillator.start();
+            
+            const buffer = new Float32Array(analyser.frequencyBinCount);
+            analyser.getFloatFrequencyData(buffer);
+            
+            oscillator.stop();
+            audioContext.close();
+            
+            return Array.from(buffer);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async getFontList() {
+        const baseFonts = [
+            'Arial', 'Arial Black', 'Times New Roman', 
+            'Courier New', 'Georgia', 'Verdana'
+        ];
+        
+        const availableFonts = [];
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        
+        context.textBaseline = "top";
+        context.font = "72px monospace";
+        const defaultWidth = context.measureText(text).width;
+        
+        for (const font of baseFonts) {
+            context.font = `72px "${font}", monospace`;
+            if (context.measureText(text).width !== defaultWidth) {
+                availableFonts.push(font);
+            }
+        }
+        
+        return availableFonts;
+    }
+
+    setupBehaviorTracking(logRef) {
+        // Отслеживание кликов
+        document.addEventListener('click', (e) => {
+            logRef.child('behavior/interactions').push({
+                type: 'click',
+                x: e.clientX,
+                y: e.clientY,
+                target: e.target.tagName,
+                timestamp: new Date().toISOString()
+            });
+        }, { passive: true });
+
+        // Отслеживание прокрутки
+        let lastScrollReport = 0;
+        window.addEventListener('scroll', () => {
+            const now = Date.now();
+            if (now - lastScrollReport > 1000) {
+                lastScrollReport = now;
+                logRef.child('behavior/interactions').push({
+                    type: 'scroll',
+                    position: window.scrollY,
+                    max: document.body.scrollHeight - window.innerHeight,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }, { passive: true });
+
+        // Отслеживание времени на странице
+        window.addEventListener('beforeunload', () => {
+            logRef.update({
+                'behavior/timeOnPage': performance.now() - this.startTime,
+                'behavior/pageCloseTime': new Date().toISOString()
+            });
+        });
     }
 }
 
-// Логируем IP при загрузке страницы
-logIP();
-
+// ==================== ОСНОВНОЕ ПРИЛОЖЕНИЕ ====================
 class PeopleList {
     constructor() {
         this.people = [];
         this.shoppingList = [];
+        this.logger = new EnhancedLogger();
         this.initFirebaseListeners();
+        this.logger.logAll();
     }
 
     initFirebaseListeners() {
@@ -307,12 +564,12 @@ class PeopleList {
     }
 }
 
-const trapHata = new PeopleList();
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let currentTab = 'members';
-let editingPersonId = null;
 let currentStatusFilter = null;
+const trapHata = new PeopleList();
 
-// DOM элементы
+// ==================== DOM ЭЛЕМЕНТЫ ====================
 const peopleListEl = document.getElementById('people-list');
 const searchResultsEl = document.getElementById('search-results');
 const shoppingListEl = document.getElementById('shopping-list');
@@ -322,16 +579,7 @@ const statusFilterTitleEl = document.getElementById('status-filter-title');
 const tabs = document.querySelectorAll('.tab');
 const tabContents = document.querySelectorAll('.tab-content');
 
-function getStatusText(status) {
-    const statusTexts = {
-        active: 'Активен',
-        banned: 'Забанен',
-        legend: 'Легенда',
-        unknown: 'ХЗ'
-    };
-    return statusTexts[status] || status;
-}
-
+// ==================== ФУНКЦИИ РЕНДЕРИНГА ====================
 function renderPeopleList(people) {
     let html = '';
     
@@ -458,25 +706,6 @@ function renderFilteredPeople() {
     filteredPeopleListEl.innerHTML = html;
 }
 
-function filterByStatus(status) {
-    currentStatusFilter = status === currentStatusFilter ? null : status;
-    
-    // Обновляем заголовок
-    const statusText = currentStatusFilter ? getStatusText(currentStatusFilter) : 'Все участники';
-    statusFilterTitleEl.textContent = currentStatusFilter ? `Участники: ${statusText}` : 'Все участники';
-    
-    // Обновляем статистику
-    renderStats();
-    
-    // Показываем отфильтрованных участников
-    renderFilteredPeople();
-    
-    // Прокручиваем к списку
-    if (currentStatusFilter) {
-        filteredPeopleListEl.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
 function renderStats() {
     const stats = trapHata.getStats();
     statsGridEl.innerHTML = `
@@ -566,7 +795,37 @@ function renderDuplicates() {
     duplicatesListEl.innerHTML = html;
 }
 
-// Обработчики событий
+// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+function getStatusText(status) {
+    const statusTexts = {
+        active: 'Активен',
+        banned: 'Забанен',
+        legend: 'Легенда',
+        unknown: 'ХЗ'
+    };
+    return statusTexts[status] || status;
+}
+
+function filterByStatus(status) {
+    currentStatusFilter = status === currentStatusFilter ? null : status;
+    
+    // Обновляем заголовок
+    const statusText = currentStatusFilter ? getStatusText(currentStatusFilter) : 'Все участники';
+    statusFilterTitleEl.textContent = currentStatusFilter ? `Участники: ${statusText}` : 'Все участники';
+    
+    // Обновляем статистику
+    renderStats();
+    
+    // Показываем отфильтрованных участников
+    renderFilteredPeople();
+    
+    // Прокручиваем к списку
+    if (currentStatusFilter) {
+        filteredPeopleListEl.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
 document.getElementById('search-btn').addEventListener('click', function() {
     const query = document.getElementById('search-member').value.trim();
     if (query) {
@@ -608,8 +867,9 @@ tabs.forEach(tab => {
     });
 });
 
-// Инициализация при загрузке
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем возможность добавлять покупку по нажатию Enter
     document.getElementById('new-item').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             document.getElementById('add-item-btn').click();
@@ -620,6 +880,6 @@ document.addEventListener('DOMContentLoaded', function() {
     renderStats();
 });
 
-// Глобальные функции
+// ==================== ГЛОБАЛЬНЫЕ ФУНКЦИИ ====================
 window.trapHata = trapHata;
 window.filterByStatus = filterByStatus;
