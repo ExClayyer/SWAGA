@@ -498,21 +498,58 @@ button:hover::after {
     cursor: pointer;
     transition: all 0.3s;
     min-height: 200px;
+    position: relative;
 }
 
 .add-card:hover {
     border-color: var(--accent-color);
-    transform: translateY(-5px);
 }
 
 .add-card::before {
     content: '+';
     font-size: 3rem;
     color: var(--secondary-color);
+    transition: all 0.3s;
 }
 
 .add-card:hover::before {
     color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+.add-form {
+    display: none;
+    width: 100%;
+}
+
+.add-card.editing {
+    border-style: solid;
+    padding: 1rem;
+}
+
+.add-card.editing::before {
+    display: none;
+}
+
+.add-card.editing .add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.add-input {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: var(--input-bg);
+    border: 1px solid var(--secondary-color);
+    color: var(--text-color);
+    border-radius: 3px;
+}
+
+.add-submit {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
 }
 
 @media (max-width: 768px) {
@@ -541,4 +578,27 @@ button:hover::after {
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+#status-filter-title {
+    margin-top: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--secondary-color);
+}
+
+.stat-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: scale(1.05);
+}
+
+.stat-card.active {
+    border: 2px solid var(--accent-color);
+}
+
+#filtered-people-list {
+    margin-top: 1rem;
 }
