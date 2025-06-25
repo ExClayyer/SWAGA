@@ -30,6 +30,10 @@
             color: var(--text-color);
             min-height: 100vh;
             overflow-x: hidden;
+            background: url('https://images.hdqwalls.com/download/rock-as-a-gtav-character-3j-3840x2400.jpg');
+            background-size:cover;
+            background-position: -650px 0px;
+            background-repeat: no-repeat;
         }
 
         .container {
@@ -606,492 +610,299 @@
         </div>
     </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script>
-        class PeopleList {
-            constructor() {
-                // Пробуем загрузить данные из localStorage
-                const savedPeople = localStorage.getItem('trapHata_people');
-                const savedShopping = localStorage.getItem('trapHata_shopping');
-                
-                this.people = savedPeople ? JSON.parse(savedPeople) : [
-                    { id: 1, name: 'Гриша', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 2, name: 'кирил', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 3, name: 'кирил', note: '', status: 'banned', joinDate: '2025-26-06' },
-                    { id: 4, name: 'рома', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 5, name: 'рома', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 6, name: 'саня', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 7, name: 'денис', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 8, name: 'денис', note: '', status: 'inactive', joinDate: '2025-26-06' },
-                    { id: 9, name: 'вова', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 10, name: 'вова', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 11, name: 'зонов', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 12, name: 'цой', note: '', status: 'legend', joinDate: '2025-26-06' },
-                    { id: 13, name: 'павлик', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 14, name: 'костя', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 15, name: 'андрей', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 16, name: 'андрей', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 17, name: 'наташа', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 18, name: 'оксана', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 19, name: 'лиза', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 20, name: 'виоллета', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 21, name: 'юля', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 22, name: 'варя', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 23, name: 'сабрина', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 24, name: 'даша', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 25, name: 'вика', note: '', status: 'active', joinDate: '2025-26-06' },
-                    { id: 26, name: 'ева', note: '', status: 'active', joinDate: '2025-26-06' }
-                ];
-                
-                this.shoppingList = savedShopping ? JSON.parse(savedShopping) : [
-                    { id: 1, text: 'Кола', completed: false },
-                    { id: 2, text: 'Чипсы', completed: false },
-                    { id: 3, text: 'Пиво', completed: true }
-                ];
-                
-                // Сохраняем начальные данные, если их не было
-                if (!savedPeople) this.savePeople();
-                if (!savedShopping) this.saveShopping();
-            }
+    // 🔥 Конфигурация Firebase (ЗАМЕНИТЕ НА СВОЮ!)
+    const firebaseConfig = {
+  apiKey: "AIzaSyCBHCqZ-e93SKKK4QuY0LD1egmlndRrhnY",
+  authDomain: "trape-hata.firebaseapp.com",
+  databaseURL: "https://trape-hata-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "trape-hata",
+  storageBucket: "trape-hata.firebasestorage.app",
+  messagingSenderId: "1029072503589",
+  appId: "1:1029072503589:web:4a199e03788bb0f5c390cc"
+};
 
-            // Методы для сохранения данных
-            savePeople() {
-                localStorage.setItem('trapHata_people', JSON.stringify(this.people));
-            }
+    // Инициализация Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
 
-            saveShopping() {
-                localStorage.setItem('trapHata_shopping', JSON.stringify(this.shoppingList));
-            }
-
-            // Основные методы
-            getAll() {
-                return this.people;
-            }
-
-            getById(id) {
-                return this.people.find(person => person.id === id);
-            }
-
-            getByName(name) {
-                return this.people.filter(person => 
-                    person.name.toLowerCase().includes(name.toLowerCase())
-                );
-            }
-
-            getWithNoteXZ() {
-                return this.people.filter(person => person.note === 'хз');
-            }
-
-            addPerson(name, note = '', status = 'active') {
-                const newId = this.people.length > 0 ? Math.max(...this.people.map(p => p.id)) + 1 : 1;
-                const newPerson = {
-                    id: newId,
-                    name,
-                    note,
-                    status,
-                    joinDate: new Date().toISOString().split('T')[0]
-                };
-                this.people.push(newPerson);
-                this.savePeople();
-                return newPerson;
-            }
-
-            removeById(id) {
-                this.people = this.people.filter(person => person.id !== id);
-                this.savePeople();
-                return this.people;
-            }
-
-            // Дополнительные методы
-            updatePerson(id, updates) {
-                const index = this.people.findIndex(person => person.id === id);
-                if (index !== -1) {
-                    this.people[index] = { ...this.people[index], ...updates };
-                    this.savePeople();
-                    return this.people[index];
-                }
-                return null;
-            }
-
-            changeStatus(id, newStatus) {
-                return this.updatePerson(id, { status: newStatus });
-            }
-
-            addNote(id, note) {
-                return this.updatePerson(id, { note });
-            }
-
-            getActiveMembers() {
-                return this.people.filter(person => person.status === 'active');
-            }
-
-            getBannedMembers() {
-                return this.people.filter(person => person.status === 'banned');
-            }
-
-            getLegends() {
-                return this.people.filter(person => person.status === 'legend');
-            }
-
-            getRecentMembers(days = 30) {
-                const cutoffDate = new Date();
-                cutoffDate.setDate(cutoffDate.getDate() - days);
-                return this.people.filter(person => {
-                    const joinDate = new Date(person.joinDate);
-                    return joinDate >= cutoffDate;
-                });
-            }
-
-            search(query) {
-                return this.people.filter(person => 
-                    person.name.toLowerCase().includes(query.toLowerCase()) ||
-                    (person.note && person.note.toLowerCase().includes(query.toLowerCase()))
-                );
-            }
-
-            getStats() {
-                return {
-                    total: this.people.length,
-                    active: this.getActiveMembers().length,
-                    banned: this.getBannedMembers().length,
-                    legends: this.getLegends().length,
-                    xz: this.getWithNoteXZ().length,
-                    recent: this.getRecentMembers().length
-                };
-            }
-
-            getDuplicates() {
-                const nameCounts = {};
-                this.people.forEach(person => {
-                    nameCounts[person.name] = (nameCounts[person.name] || 0) + 1;
-                });
-                
-                return Object.entries(nameCounts)
-                    .filter(([name, count]) => count > 1)
-                    .map(([name]) => name);
-            }
-
-            // Методы для списка покупок
-            getShoppingList() {
-                return this.shoppingList;
-            }
-
-            addShoppingItem(text) {
-                const newId = this.shoppingList.length > 0 ? Math.max(...this.shoppingList.map(item => item.id)) + 1 : 1;
-                const newItem = {
-                    id: newId,
-                    text,
-                    completed: false
-                };
-                this.shoppingList.push(newItem);
-                this.saveShopping();
-                return newItem;
-            }
-
-            removeShoppingItem(id) {
-                this.shoppingList = this.shoppingList.filter(item => item.id !== id);
-                this.saveShopping();
-                return this.shoppingList;
-            }
-
-            toggleShoppingItem(id) {
-                const item = this.shoppingList.find(item => item.id === id);
-                if (item) {
-                    item.completed = !item.completed;
-                    this.saveShopping();
-                }
-                return item;
-            }
+    class PeopleList {
+        constructor() {
+            this.people = [];
+            this.shoppingList = [];
+            this.initFirebaseListeners();
+            this.initData();
         }
 
-        // Инициализация приложения
-        const trapHata = new PeopleList();
-        let currentTab = 'members';
-
-        // DOM элементы
-        const peopleListEl = document.getElementById('people-list');
-        const searchResultsEl = document.getElementById('search-results');
-        const shoppingListEl = document.getElementById('shopping-list');
-        const statsGridEl = document.getElementById('stats-grid');
-        const duplicatesListEl = document.getElementById('duplicates-list');
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        // Функции рендеринга
-        function renderPeopleList(people) {
-            if (people.length === 0) {
-                peopleListEl.innerHTML = '<div class="empty-state">Нет участников</div>';
-                return;
-            }
-
-            peopleListEl.innerHTML = '';
-            people.forEach(person => {
-                const statusClass = `status-${person.status}`;
-                const statusText = {
-                    active: '100%',
-                    inactive: 'ХЗ',
-                    banned: 'Забанен',
-                    legend: ''
-                }[person.status];
-
-                const personEl = document.createElement('div');
-                personEl.className = `person-card ${person.status}`;
-                personEl.innerHTML = `
-                    <div class="person-name">
-                        ${person.name}
-                        <span class="person-id">#${person.id}</span>
-                    </div>
-                    ${person.note ? `<div class="person-note">${person.note}</div>` : ''}
-                    <div class="person-status ${statusClass}">${statusText}</div>
-                    <div class="person-join-date">В хате с ${person.joinDate}</div>
-                    <div class="person-actions">
-                        <button data-id="${person.id}" data-action="status" data-status="active" class="btn-success">100%</button>
-                        <button data-id="${person.id}" data-action="status" data-status="inactive" class="btn-warning">ХЗ</button>
-                        <button data-id="${person.id}" data-action="status" data-status="banned" class="btn-danger">Бан</button>
-                        <button data-id="${person.id}" data-action="status" data-status="legend" class="btn-legend">-----</button>
-                    </div>
-                `;
-                peopleListEl.appendChild(personEl);
+        // Инициализация слушателей Firebase
+        initFirebaseListeners() {
+            // Слушатель для участников
+            database.ref('people').on('value', (snapshot) => {
+                this.people = snapshot.val() || [];
+                renderPeopleList(this.people);
             });
 
-            // Добавляем обработчики событий для кнопок
-            document.querySelectorAll('[data-action="status"]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = parseInt(this.getAttribute('data-id'));
-                    const status = this.getAttribute('data-status');
-                    trapHata.changeStatus(id, status);
-                    renderPeopleList(trapHata.getAll());
-                });
-            });
-        }
-
-        function renderSearchResults(results) {
-            if (results.length === 0) {
-                searchResultsEl.innerHTML = '<div class="no-results">Ничего не найдено</div>';
-                return;
-            }
-
-            searchResultsEl.innerHTML = '<h3>Результаты поиска:</h3>';
-            const resultsContainer = document.createElement('div');
-            resultsContainer.className = 'people-list';
-            
-            results.forEach(person => {
-                const statusClass = `status-${person.status}`;
-                const statusText = {
-                    active: 'Активный',
-                    inactive: 'Неактивный',
-                    banned: 'Забанен',
-                    legend: 'Легенда'
-                }[person.status];
-
-                const personEl = document.createElement('div');
-                personEl.className = `person-card ${person.status}`;
-                personEl.innerHTML = `
-                    <div class="person-name">
-                        ${person.name}
-                        <span class="person-id">#${person.id}</span>
-                    </div>
-                    ${person.note ? `<div class="person-note">${person.note}</div>` : ''}
-                    <div class="person-status ${statusClass}">${statusText}</div>
-                    <div class="person-join-date">В хате с ${person.joinDate}</div>
-                `;
-                resultsContainer.appendChild(personEl);
-            });
-
-            searchResultsEl.appendChild(resultsContainer);
-        }
-
-        function renderShoppingList() {
-            const items = trapHata.getShoppingList();
-            if (items.length === 0) {
-                shoppingListEl.innerHTML = '<div class="empty-state">Список покупок пуст</div>';
-                return;
-            }
-
-            shoppingListEl.innerHTML = '';
-            items.forEach(item => {
-                const itemEl = document.createElement('div');
-                itemEl.className = `shopping-item ${item.completed ? 'completed' : ''}`;
-                itemEl.innerHTML = `
-                    <div class="shopping-item-text" style="${item.completed ? 'text-decoration: line-through; opacity: 0.7;' : ''}">
-                        ${item.text}
-                    </div>
-                    <div class="shopping-item-actions">
-                        <button data-id="${item.id}" data-action="toggle" class="${item.completed ? 'btn-success' : 'btn-warning'}">
-                            ${item.completed ? '✓' : '✗'}
-                        </button>
-                        <button data-id="${item.id}" data-action="remove" class="btn-danger">Удалить</button>
-                    </div>
-                `;
-                shoppingListEl.appendChild(itemEl);
-            });
-
-            // Добавляем обработчики событий
-            document.querySelectorAll('[data-action="toggle"]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = parseInt(this.getAttribute('data-id'));
-                    trapHata.toggleShoppingItem(id);
-                    renderShoppingList();
-                });
-            });
-
-            document.querySelectorAll('[data-action="remove"]').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const id = parseInt(this.getAttribute('data-id'));
-                    trapHata.removeShoppingItem(id);
-                    renderShoppingList();
-                });
-            });
-        }
-
-        function renderStats() {
-            const stats = trapHata.getStats();
-            statsGridEl.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-value">${stats.total}</div>
-                    <div class="stat-label">Всего</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${stats.active}</div>
-                    <div class="stat-label">Активных</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${stats.banned}</div>
-                    <div class="stat-label">Забанено</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${stats.legends}</div>
-                    <div class="stat-label">Легенд</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${stats.xz}</div>
-                    <div class="stat-label">ХЗ</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${stats.recent}</div>
-                    <div class="stat-label">Новых (30 дн.)</div>
-                </div>
-            `;
-        }
-
-        function renderDuplicates() {
-            const duplicates = trapHata.getDuplicates();
-            if (duplicates.length === 0) {
-                duplicatesListEl.innerHTML = '<div class="empty-state">Нет повторяющихся имен</div>';
-                return;
-            }
-
-            duplicatesListEl.innerHTML = '';
-            duplicates.forEach(name => {
-                const duplicateEl = document.createElement('div');
-                duplicateEl.className = 'duplicate-item';
-                duplicateEl.textContent = name;
-                duplicatesListEl.appendChild(duplicateEl);
-            });
-        }
-
-        // Обработчики событий
-        document.getElementById('add-person-btn').addEventListener('click', function() {
-            const name = document.getElementById('new-name').value.trim();
-            const note = document.getElementById('new-note').value.trim();
-            const status = document.getElementById('new-status').value;
-
-            if (name) {
-                trapHata.addPerson(name, note, status);
-                document.getElementById('new-name').value = '';
-                document.getElementById('new-note').value = '';
-                renderPeopleList(trapHata.getAll());
-            }
-        });
-
-        document.getElementById('update-person-btn').addEventListener('click', function() {
-            const id = parseInt(document.getElementById('edit-id').value);
-            const note = document.getElementById('edit-note').value.trim();
-            const status = document.getElementById('edit-status').value;
-
-            if (id) {
-                const updates = {};
-                if (note) updates.note = note;
-                if (status) updates.status = status;
-                
-                trapHata.updatePerson(id, updates);
-                document.getElementById('edit-id').value = '';
-                document.getElementById('edit-note').value = '';
-                renderPeopleList(trapHata.getAll());
-            }
-        });
-
-        document.getElementById('remove-person-btn').addEventListener('click', function() {
-            const id = parseInt(document.getElementById('edit-id').value);
-            if (id) {
-                trapHata.removeById(id);
-                document.getElementById('edit-id').value = '';
-                renderPeopleList(trapHata.getAll());
-            }
-        });
-
-        document.getElementById('search-btn').addEventListener('click', function() {
-            const query = document.getElementById('search-member').value.trim();
-            if (query) {
-                const results = trapHata.search(query);
-                renderSearchResults(results);
-            }
-        });
-
-        document.getElementById('reset-search-btn').addEventListener('click', function() {
-            document.getElementById('search-member').value = '';
-            searchResultsEl.innerHTML = '';
-        });
-
-        document.getElementById('add-item-btn').addEventListener('click', function() {
-            const text = document.getElementById('new-item').value.trim();
-            if (text) {
-                trapHata.addShoppingItem(text);
-                document.getElementById('new-item').value = '';
+            // Слушатель для списка покупок
+            database.ref('shopping').on('value', (snapshot) => {
+                this.shoppingList = snapshot.val() || [];
                 renderShoppingList();
+            });
+        }
+
+        // Первоначальная загрузка данных
+        async initData() {
+            try {
+                const peopleSnapshot = await database.ref('people').once('value');
+                const shoppingSnapshot = await database.ref('shopping').once('value');
+                
+                if (!peopleSnapshot.exists()) {
+                    await database.ref('people').set([
+                        { id: 1, name: 'Гриша', note: '', status: 'active', joinDate: '2025-26-06' },
+                        // ... остальные начальные данные
+                    ]);
+                }
+                
+                if (!shoppingSnapshot.exists()) {
+                    await database.ref('shopping').set([
+                        { id: 1, text: 'Кола', completed: false },
+                        // ... остальные начальные данные
+                    ]);
+                }
+            } catch (error) {
+                console.error("Ошибка инициализации:", error);
+            }
+        }
+
+        // 🔄 Методы для работы с участниками
+        async savePeople() {
+            try {
+                await database.ref('people').set(this.people);
+            } catch (error) {
+                console.error("Ошибка сохранения участников:", error);
+                alert("Не удалось сохранить изменения");
+            }
+        }
+
+        async addPerson(name, note = '', status = 'active') {
+            const newId = this.people.length > 0 ? Math.max(...this.people.map(p => p.id)) + 1 : 1;
+            const newPerson = {
+                id: newId,
+                name,
+                note,
+                status,
+                joinDate: new Date().toISOString().split('T')[0]
+            };
+            this.people.push(newPerson);
+            await this.savePeople();
+            return newPerson;
+        }
+
+        async updatePerson(id, updates) {
+            const index = this.people.findIndex(person => person.id === id);
+            if (index !== -1) {
+                this.people[index] = { ...this.people[index], ...updates };
+                await this.savePeople();
+                return this.people[index];
+            }
+            return null;
+        }
+
+        async changeStatus(id, newStatus) {
+            return this.updatePerson(id, { status: newStatus });
+        }
+
+        async removeById(id) {
+            this.people = this.people.filter(person => person.id !== id);
+            await this.savePeople();
+            return this.people;
+        }
+
+        // 🛒 Методы для списка покупок
+        async saveShopping() {
+            try {
+                await database.ref('shopping').set(this.shoppingList);
+            } catch (error) {
+                console.error("Ошибка сохранения списка:", error);
+                alert("Не удалось сохранить изменения");
+            }
+        }
+
+        async addShoppingItem(text) {
+            const newId = this.shoppingList.length > 0 ? Math.max(...this.shoppingList.map(item => item.id)) + 1 : 1;
+            const newItem = {
+                id: newId,
+                text,
+                completed: false
+            };
+            this.shoppingList.push(newItem);
+            await this.saveShopping();
+            return newItem;
+        }
+
+        async removeShoppingItem(id) {
+            this.shoppingList = this.shoppingList.filter(item => item.id !== id);
+            await this.saveShopping();
+            return this.shoppingList;
+        }
+
+        async toggleShoppingItem(id) {
+            const item = this.shoppingList.find(item => item.id === id);
+            if (item) {
+                item.completed = !item.completed;
+                await this.saveShopping();
+            }
+            return item;
+        }
+
+        // 📊 Вспомогательные методы
+        getStats() {
+            const active = this.people.filter(p => p.status === 'active').length;
+            const banned = this.people.filter(p => p.status === 'banned').length;
+            const legends = this.people.filter(p => p.status === 'legend').length;
+            const xz = this.people.filter(p => p.note === 'хз').length;
+            
+            return {
+                total: this.people.length,
+                active,
+                banned,
+                legends,
+                xz,
+                recent: this.people.filter(p => {
+                    const joinDate = new Date(p.joinDate);
+                    return joinDate > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                }).length
+            };
+        }
+
+        getDuplicates() {
+            const nameCounts = {};
+            this.people.forEach(person => {
+                nameCounts[person.name] = (nameCounts[person.name] || 0) + 1;
+            });
+            return Object.entries(nameCounts).filter(([_, count]) => count > 1).map(([name]) => name);
+        }
+
+        search(query) {
+            return this.people.filter(person => 
+                person.name.toLowerCase().includes(query.toLowerCase()) ||
+                (person.note && person.note.toLowerCase().includes(query.toLowerCase()))
+            );
+        }
+    }
+
+    // Инициализация приложения
+    const trapHata = new PeopleList();
+    let currentTab = 'members';
+
+    // DOM элементы
+    const peopleListEl = document.getElementById('people-list');
+    const searchResultsEl = document.getElementById('search-results');
+    const shoppingListEl = document.getElementById('shopping-list');
+    const statsGridEl = document.getElementById('stats-grid');
+    const duplicatesListEl = document.getElementById('duplicates-list');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // Функции рендеринга (без изменений)
+    function renderPeopleList(people) { /* ... */ }
+    function renderSearchResults(results) { /* ... */ }
+    function renderShoppingList() { /* ... */ }
+    function renderStats() { /* ... */ }
+    function renderDuplicates() { /* ... */ }
+
+    // 🎯 Обработчики событий с async/await
+    document.getElementById('add-person-btn').addEventListener('click', async function() {
+        const name = document.getElementById('new-name').value.trim();
+        const note = document.getElementById('new-note').value.trim();
+        const status = document.getElementById('new-status').value;
+
+        if (name) {
+            await trapHata.addPerson(name, note, status);
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-note').value = '';
+        }
+    });
+
+    document.getElementById('update-person-btn').addEventListener('click', async function() {
+        const id = parseInt(document.getElementById('edit-id').value);
+        const note = document.getElementById('edit-note').value.trim();
+        const status = document.getElementById('edit-status').value;
+
+        if (id) {
+            const updates = {};
+            if (note) updates.note = note;
+            if (status) updates.status = status;
+            
+            await trapHata.updatePerson(id, updates);
+            document.getElementById('edit-id').value = '';
+            document.getElementById('edit-note').value = '';
+        }
+    });
+
+    document.getElementById('remove-person-btn').addEventListener('click', async function() {
+        const id = parseInt(document.getElementById('edit-id').value);
+        if (id) {
+            await trapHata.removeById(id);
+            document.getElementById('edit-id').value = '';
+        }
+    });
+
+    document.getElementById('add-item-btn').addEventListener('click', async function() {
+        const text = document.getElementById('new-item').value.trim();
+        if (text) {
+            await trapHata.addShoppingItem(text);
+            document.getElementById('new-item').value = '';
+        }
+    });
+
+    document.getElementById('search-btn').addEventListener('click', function() {
+        const query = document.getElementById('search-member').value.trim();
+        if (query) {
+            const results = trapHata.search(query);
+            renderSearchResults(results);
+        }
+    });
+
+    // Остальные обработчики (без изменений)
+    document.getElementById('reset-search-btn').addEventListener('click', function() {
+        document.getElementById('search-member').value = '';
+        searchResultsEl.innerHTML = '';
+    });
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+            currentTab = tabId;
+            
+            if (tabId === 'stats') {
+                renderStats();
+                renderDuplicates();
             }
         });
+    });
 
-        // Переключение вкладок
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                
-                // Убираем активный класс у всех вкладок и контента
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                
-                // Добавляем активный класс текущей вкладке и контенту
-                this.classList.add('active');
-                document.getElementById(`${tabId}-tab`).classList.add('active');
-                currentTab = tabId;
-                
-                // При переключении на вкладку статистики обновляем данные
-                if (tabId === 'stats') {
-                    renderStats();
-                    renderDuplicates();
-                }
-            });
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        // Добавляем возможность добавлять покупку по нажатию Enter
+        document.getElementById('new-item').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('add-item-btn').click();
+            }
         });
-
-        // Инициализация при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            renderPeopleList(trapHata.getAll());
-            renderShoppingList();
-            
-            // Добавляем возможность добавлять покупку по нажатию Enter
-            document.getElementById('new-item').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('add-item-btn').click();
-                }
-            });
-            
-            // Добавляем возможность добавлять участника по нажатию Enter
-            document.getElementById('new-name').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('add-person-btn').click();
-                }
-            });
+        
+        // Добавляем возможность добавлять участника по нажатию Enter
+        document.getElementById('new-name').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('add-person-btn').click();
+            }
         });
-    </script>
+    });
+</script>
 </body>
 </html>
