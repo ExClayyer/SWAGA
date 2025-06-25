@@ -9,71 +9,111 @@ const firebaseConfig = {
     appId: "1:1029072503589:web:4a199e03788bb0f5c390cc"
 };
 
-// Инициализация Firebase
-firebase.initializeApp(firebaseConfig);
+// Инициализация Firebase с проверкой дублирования
+if (!firebase.apps.length) {
+    try {
+        firebase.initializeApp(firebaseConfig);
+        console.log("Firebase успешно инициализирован");
+    } catch (error) {
+        console.error("Ошибка инициализации Firebase:", error);
+    }
+}
 const database = firebase.database();
 
-// ==================== РАСШИРЕННЫЙ ЛОГГЕР ====================
+// ==================== УЛУЧШЕННЫЙ ЛОГГЕР ====================
 class EnhancedLogger {
     constructor() {
         this.sessionId = this.generateUUID();
         this.startTime = performance.now();
         this.pageLoadTime = Date.now();
+        this.errorCount = 0;
     }
 
     async logAll() {
+        const logData = {
+            meta: {
+                timestamp: new Date().toISOString(),
+                sessionId: this.sessionId,
+                version: "2.1",
+                pageLoad: this.pageLoadTime
+            },
+            environment: this.getEnvironmentInfo()
+        };
+
         try {
-            const data = {
-                meta: {
-                    timestamp: new Date().toISOString(),
-                    sessionId: this.sessionId,
-                    version: "1.0"
-                },
+            // Собираем основные синхронные данные
+            Object.assign(logData, {
                 page: this.getPageInfo(),
-                device: await this.getDeviceInfo(),
-                network: await this.getNetworkInfo(),
                 software: this.getSoftwareInfo(),
-                performance: this.getPerformanceMetrics(),
-                environment: this.getEnvironmentInfo(),
-                fingerprints: {
-                    canvas: this.getCanvasFingerprint(),
-                    webgl: this.getWebGLFingerprint(),
-                    audio: await this.getAudioFingerprint(),
-                    fonts: await this.getFontList()
-                },
-                behavior: {
-                    interactions: []
-                }
+                performance: this.getPerformanceMetrics()
+            });
+
+            // Асинхронные данные с обработкой ошибок
+            logData.device = await this.safeCall(this.getDeviceInfo());
+            logData.network = await this.safeCall(this.getNetworkInfo());
+            
+            // Собираем отпечатки устройства
+            logData.fingerprints = {
+                canvas: this.getCanvasFingerprint(),
+                webgl: this.getWebGLFingerprint(),
+                audio: await this.safeCall(this.getAudioFingerprint()),
+                fonts: await this.safeCall(this.getFontList())
             };
 
-            // Добавляем геоданные
-            data.geo = await this.getGeoData(data.network.publicIP);
+            // Геоданные (только если есть IP)
+            if (logData.network?.publicIP) {
+                logData.geo = await this.safeCall(this.getGeoData(logData.network.publicIP));
+            }
 
-            // Сохраняем в Firebase
-            const logRef = database.ref('enhanced_logs').push(data);
-            this.setupBehaviorTracking(logRef);
-            
-            return logRef.key;
+            // Валидация и сохранение
+            if (this.validateLogData(logData)) {
+                const logRef = database.ref('enhanced_logs').push(logData);
+                this.setupBehaviorTracking(logRef);
+                return logRef.key;
+            }
         } catch (error) {
-            console.error('Logger error:', error);
-            database.ref('log_errors').push({
-                error: error.message,
-                timestamp: new Date().toISOString()
-            });
-            return null;
+            this.logError(error);
+        }
+        return null;
+    }
+
+    // ===== ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ =====
+    async safeCall(promise, defaultValue = null) {
+        try {
+            return await promise;
+        } catch (error) {
+            console.warn(`Safe call failed: ${error.message}`);
+            return defaultValue;
         }
     }
 
-    // Генерация UUID
-    generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
+    validateLogData(data) {
+        const requiredFields = ['meta', 'page', 'environment'];
+        return requiredFields.every(field => data[field]);
     }
 
-    // Информация о странице
+    logError(error) {
+        this.errorCount++;
+        const errorData = {
+            message: error.message,
+            stack: error.stack,
+            timestamp: new Date().toISOString(),
+            errorCount: this.errorCount,
+            environment: this.getEnvironmentInfo()
+        };
+        database.ref('log_errors').push(errorData);
+        console.error('Logger error:', errorData);
+    }
+
+    generateUUID() {
+        return crypto.randomUUID?.() || 
+            'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+    }
+
+    // ===== МЕТОДЫ СБОРА ДАННЫХ =====
     getPageInfo() {
         return {
             url: window.location.href,
@@ -88,9 +128,8 @@ class EnhancedLogger {
         };
     }
 
-    // Информация об устройстве
     async getDeviceInfo() {
-        const battery = await this.getBatteryInfo();
+        const battery = await this.safeCall(this.getBatteryInfo());
         
         return {
             type: this.detectDeviceType(),
@@ -120,29 +159,35 @@ class EnhancedLogger {
         };
     }
 
-    // Информация о сети
     async getNetworkInfo() {
-        const connection = navigator.connection || {};
-        const ipResponse = await fetch('https://api.ipify.org?format=json');
-        const { ip } = await ipResponse.json();
-        
-        return {
-            publicIP: ip,
-            localIPs: await this.getLocalIPs(),
-            connection: {
-                type: connection.effectiveType,
-                downlink: connection.downlink,
-                rtt: connection.rtt,
-                saveData: connection.saveData
-            },
-            headers: {
-                userAgent: navigator.userAgent,
-                languages: navigator.languages
-            }
-        };
+        try {
+            const connection = navigator.connection || {};
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            const { ip } = await ipResponse.json();
+            
+            return {
+                publicIP: ip,
+                localIPs: await this.safeCall(this.getLocalIPs(), []),
+                connection: {
+                    type: connection.effectiveType,
+                    downlink: connection.downlink,
+                    rtt: connection.rtt,
+                    saveData: connection.saveData
+                },
+                headers: {
+                    userAgent: navigator.userAgent,
+                    languages: navigator.languages
+                }
+            };
+        } catch (error) {
+            console.error('Network info error:', error);
+            return {
+                error: 'Failed to get network info',
+                details: error.message
+            };
+        }
     }
 
-    // Информация о ПО
     getSoftwareInfo() {
         return {
             os: this.detectOS(),
@@ -158,22 +203,20 @@ class EnhancedLogger {
         };
     }
 
-    // Метрики производительности
     getPerformanceMetrics() {
         const perf = window.performance;
         return {
-            timing: {
-                navigationStart: perf.timing?.navigationStart,
-                loadEventEnd: perf.timing?.loadEventEnd,
-                domComplete: perf.timing?.domComplete
-            },
+            timing: perf.timing ? {
+                navigationStart: perf.timing.navigationStart,
+                loadEventEnd: perf.timing.loadEventEnd,
+                domComplete: perf.timing.domComplete
+            } : null,
             memory: perf.memory,
             now: perf.now(),
             timeOrigin: perf.timeOrigin
         };
     }
 
-    // Информация об окружении
     getEnvironmentInfo() {
         return {
             online: navigator.onLine,
@@ -184,14 +227,113 @@ class EnhancedLogger {
         };
     }
 
-    // ===== ДЕТАЛЬНЫЕ МЕТОДЫ СБОРА ДАННЫХ =====
+    // ===== МЕТОДЫ СБОРА ОТПЕЧАТКОВ =====
+    getCanvasFingerprint() {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 200;
+            canvas.height = 50;
+            
+            ctx.textBaseline = "top";
+            ctx.font = "14px 'Arial'";
+            ctx.fillStyle = "#f60";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#069";
+            ctx.fillText("Canvas Fingerprint", 2, 15);
+            
+            return canvas.toDataURL();
+        } catch (error) {
+            return null;
+        }
+    }
 
+    getWebGLFingerprint() {
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (!gl) return null;
+            
+            const result = {};
+            const properties = [
+                'VENDOR', 'RENDERER', 'VERSION', 'SHADING_LANGUAGE_VERSION',
+                'MAX_TEXTURE_SIZE', 'MAX_VIEWPORT_DIMS'
+            ];
+            
+            properties.forEach(prop => {
+                const key = prop.toLowerCase();
+                try {
+                    result[key] = gl.getParameter(gl[prop]);
+                } catch (e) {
+                    result[key] = null;
+                }
+            });
+            
+            return result;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    async getAudioFingerprint() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const analyser = audioContext.createAnalyser();
+            
+            oscillator.connect(analyser);
+            analyser.connect(audioContext.destination);
+            oscillator.start();
+            
+            const buffer = new Float32Array(analyser.frequencyBinCount);
+            analyser.getFloatFrequencyData(buffer);
+            
+            oscillator.stop();
+            audioContext.close();
+            
+            return Array.from(buffer);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async getFontList() {
+        try {
+            const baseFonts = [
+                'Arial', 'Arial Black', 'Times New Roman', 
+                'Courier New', 'Georgia', 'Verdana'
+            ];
+            
+            const availableFonts = [];
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            
+            context.textBaseline = "top";
+            context.font = "72px monospace";
+            const defaultWidth = context.measureText(text).width;
+            
+            for (const font of baseFonts) {
+                context.font = `72px "${font}", monospace`;
+                if (context.measureText(text).width !== defaultWidth) {
+                    availableFonts.push(font);
+                }
+            }
+            
+            return availableFonts;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    // ===== ДОПОЛНИТЕЛЬНЫЕ МЕТОДЫ =====
     async getGeoData(ip) {
         try {
             const response = await fetch(`https://ipapi.co/${ip}/json/`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
         } catch (error) {
-            return { error: 'Failed to fetch geo data' };
+            return { error: 'Failed to fetch geo data', details: error.message };
         }
     }
 
@@ -281,104 +423,44 @@ class EnhancedLogger {
     }
 
     getGPUInfo() {
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        if (!gl) return null;
-        
-        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-        return {
-            vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : null,
-            renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : null
-        };
-    }
-
-    getCanvasFingerprint() {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 200;
-        canvas.height = 50;
-        
-        ctx.textBaseline = "top";
-        ctx.font = "14px 'Arial'";
-        ctx.fillStyle = "#f60";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#069";
-        ctx.fillText("Canvas Fingerprint", 2, 15);
-        
-        return canvas.toDataURL();
-    }
-
-    getWebGLFingerprint() {
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        if (!gl) return null;
-        
-        const result = {};
-        const properties = [
-            'VENDOR', 'RENDERER', 'VERSION', 'SHADING_LANGUAGE_VERSION',
-            'MAX_TEXTURE_SIZE', 'MAX_VIEWPORT_DIMS'
-        ];
-        
-        properties.forEach(prop => {
-            const key = prop.toLowerCase();
-            try {
-                result[key] = gl.getParameter(gl[prop]);
-            } catch (e) {
-                result[key] = null;
-            }
-        });
-        
-        return result;
-    }
-
-    async getAudioFingerprint() {
         try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const analyser = audioContext.createAnalyser();
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (!gl) return null;
             
-            oscillator.connect(analyser);
-            analyser.connect(audioContext.destination);
-            oscillator.start();
-            
-            const buffer = new Float32Array(analyser.frequencyBinCount);
-            analyser.getFloatFrequencyData(buffer);
-            
-            oscillator.stop();
-            audioContext.close();
-            
-            return Array.from(buffer);
-        } catch (e) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            return {
+                vendor: debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : null,
+                renderer: debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : null
+            };
+        } catch (error) {
             return null;
         }
     }
 
-    async getFontList() {
-        const baseFonts = [
-            'Arial', 'Arial Black', 'Times New Roman', 
-            'Courier New', 'Georgia', 'Verdana'
-        ];
-        
-        const availableFonts = [];
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        
-        context.textBaseline = "top";
-        context.font = "72px monospace";
-        const defaultWidth = context.measureText(text).width;
-        
-        for (const font of baseFonts) {
-            context.font = `72px "${font}", monospace`;
-            if (context.measureText(text).width !== defaultWidth) {
-                availableFonts.push(font);
-            }
-        }
-        
-        return availableFonts;
-    }
-
     setupBehaviorTracking(logRef) {
+        // Оптимизация событий с throttle
+        const throttle = (func, limit) => {
+            let lastFunc;
+            let lastRan;
+            return function() {
+                const context = this;
+                const args = arguments;
+                if (!lastRan) {
+                    func.apply(context, args);
+                    lastRan = Date.now();
+                } else {
+                    clearTimeout(lastFunc);
+                    lastFunc = setTimeout(function() {
+                        if ((Date.now() - lastRan) >= limit) {
+                            func.apply(context, args);
+                            lastRan = Date.now();
+                        }
+                    }, limit - (Date.now() - lastRan));
+                }
+            };
+        };
+
         // Отслеживание кликов
         document.addEventListener('click', (e) => {
             logRef.child('behavior/interactions').push({
@@ -390,20 +472,17 @@ class EnhancedLogger {
             });
         }, { passive: true });
 
-        // Отслеживание прокрутки
-        let lastScrollReport = 0;
-        window.addEventListener('scroll', () => {
-            const now = Date.now();
-            if (now - lastScrollReport > 1000) {
-                lastScrollReport = now;
-                logRef.child('behavior/interactions').push({
-                    type: 'scroll',
-                    position: window.scrollY,
-                    max: document.body.scrollHeight - window.innerHeight,
-                    timestamp: new Date().toISOString()
-                });
-            }
-        }, { passive: true });
+        // Отслеживание прокрутки с throttle
+        const throttledScroll = throttle(() => {
+            logRef.child('behavior/interactions').push({
+                type: 'scroll',
+                position: window.scrollY,
+                max: document.body.scrollHeight - window.innerHeight,
+                timestamp: new Date().toISOString()
+            });
+        }, 1000);
+
+        window.addEventListener('scroll', throttledScroll, { passive: true });
 
         // Отслеживание времени на странице
         window.addEventListener('beforeunload', () => {
@@ -422,30 +501,45 @@ class PeopleList {
         this.shoppingList = [];
         this.logger = new EnhancedLogger();
         this.initFirebaseListeners();
-        this.logger.logAll();
+        this.initLogger();
+    }
+
+    async initLogger() {
+        try {
+            await this.logger.logAll();
+        } catch (error) {
+            console.error('Initial logging failed:', error);
+        }
     }
 
     initFirebaseListeners() {
+        const handleError = (error) => {
+            console.error('Firebase listener error:', error);
+            this.logger.logError(error);
+        };
+
         database.ref('people').on('value', (snapshot) => {
             this.people = snapshot.val() || [];
             renderPeopleList(this.people);
             if (currentStatusFilter) {
                 renderFilteredPeople();
             }
-        });
+        }, handleError);
 
         database.ref('shopping').on('value', (snapshot) => {
             this.shoppingList = snapshot.val() || [];
             renderShoppingList();
-        });
+        }, handleError);
     }
 
     async savePeople() {
         try {
             await database.ref('people').set(this.people);
+            return true;
         } catch (error) {
             console.error("Ошибка сохранения:", error);
-            alert("Ошибка: " + error.message);
+            this.logger.logError(error);
+            return false;
         }
     }
 
@@ -459,16 +553,14 @@ class PeopleList {
             joinDate: new Date().toISOString().split('T')[0]
         };
         this.people.push(newPerson);
-        await this.savePeople();
-        return newPerson;
+        return await this.savePeople() ? newPerson : null;
     }
 
     async updatePerson(id, updates) {
         const index = this.people.findIndex(person => person.id === id);
         if (index !== -1) {
             this.people[index] = { ...this.people[index], ...updates };
-            await this.savePeople();
-            return this.people[index];
+            return await this.savePeople() ? this.people[index] : null;
         }
         return null;
     }
@@ -479,8 +571,7 @@ class PeopleList {
 
     async removeById(id) {
         this.people = this.people.filter(person => person.id !== id);
-        await this.savePeople();
-        return this.people;
+        return await this.savePeople() ? this.people : null;
     }
 
     getPeopleByStatus(status) {
@@ -513,18 +604,21 @@ class PeopleList {
     }
 
     search(query) {
+        const q = query.toLowerCase();
         return this.people.filter(person => 
-            person.name.toLowerCase().includes(query.toLowerCase()) ||
-            (person.note && person.note.toLowerCase().includes(query.toLowerCase()))
+            person.name.toLowerCase().includes(q) ||
+            (person.note && person.note.toLowerCase().includes(q))
         );
     }
 
     async saveShopping() {
         try {
             await database.ref('shopping').set(this.shoppingList);
+            return true;
         } catch (error) {
             console.error("Ошибка сохранения:", error);
-            alert("Ошибка: " + error.message);
+            this.logger.logError(error);
+            return false;
         }
     }
 
@@ -536,23 +630,21 @@ class PeopleList {
             completed: false
         };
         this.shoppingList.push(newItem);
-        await this.saveShopping();
-        return newItem;
+        return await this.saveShopping() ? newItem : null;
     }
 
     async removeShoppingItem(id) {
         this.shoppingList = this.shoppingList.filter(item => item.id !== id);
-        await this.saveShopping();
-        return this.shoppingList;
+        return await this.saveShopping() ? this.shoppingList : null;
     }
 
     async toggleShoppingItem(id) {
         const item = this.shoppingList.find(item => item.id === id);
         if (item) {
             item.completed = !item.completed;
-            await this.saveShopping();
+            return await this.saveShopping() ? item : null;
         }
-        return item;
+        return null;
     }
 
     getDuplicates() {
@@ -560,7 +652,9 @@ class PeopleList {
         this.people.forEach(person => {
             nameCounts[person.name] = (nameCounts[person.name] || 0) + 1;
         });
-        return Object.entries(nameCounts).filter(([_, count]) => count > 1).map(([name]) => name);
+        return Object.entries(nameCounts)
+            .filter(([_, count]) => count > 1)
+            .map(([name]) => name);
     }
 }
 
@@ -569,9 +663,8 @@ let currentTab = 'members';
 let currentStatusFilter = null;
 const trapHata = new PeopleList();
 
-// ==================== DOM ЭЛЕМЕНТЫ ====================
+// ==================== DOM ЭЛЕМЕНТЫ И РЕНДЕРИНГ ====================
 const peopleListEl = document.getElementById('people-list');
-const searchResultsEl = document.getElementById('search-results');
 const shoppingListEl = document.getElementById('shopping-list');
 const statsGridEl = document.getElementById('stats-grid');
 const filteredPeopleListEl = document.getElementById('filtered-people-list');
@@ -579,14 +672,30 @@ const statusFilterTitleEl = document.getElementById('status-filter-title');
 const tabs = document.querySelectorAll('.tab');
 const tabContents = document.querySelectorAll('.tab-content');
 
-// ==================== ФУНКЦИИ РЕНДЕРИНГА ====================
+// Защита от XSS
+function escapeHtml(unsafe) {
+    return unsafe?.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;") || '';
+}
+
 function renderPeopleList(people) {
+    const safePeople = people.map(p => ({
+        ...p,
+        name: escapeHtml(p.name),
+        note: escapeHtml(p.note),
+        joinDate: escapeHtml(p.joinDate)
+    }));
+
     let html = '';
     
-    if (people.length === 0) {
+    if (safePeople.length === 0) {
         html = '<div class="empty-state">Нет участников</div>';
     } else {
-        people.forEach(person => {
+        safePeople.forEach(person => {
             const statusClass = `status-${person.status}`;
             const cardClass = `${person.status}`;
             html += `
@@ -673,14 +782,21 @@ function renderFilteredPeople() {
     const people = currentStatusFilter 
         ? trapHata.getPeopleByStatus(currentStatusFilter)
         : trapHata.people;
+
+    const safePeople = people.map(p => ({
+        ...p,
+        name: escapeHtml(p.name),
+        note: escapeHtml(p.note),
+        joinDate: escapeHtml(p.joinDate)
+    }));
     
     let html = '';
     
-    if (people.length === 0) {
+    if (safePeople.length === 0) {
         const statusText = currentStatusFilter ? getStatusText(currentStatusFilter) : '';
         html = `<div class="empty-state">Нет участников${statusText ? ` со статусом "${statusText}"` : ''}</div>`;
     } else {
-        people.forEach(person => {
+        safePeople.forEach(person => {
             const statusClass = `status-${person.status}`;
             const cardClass = `${person.status}`;
             html += `
@@ -737,7 +853,11 @@ function renderStats() {
 }
 
 function renderShoppingList() {
-    const items = trapHata.shoppingList;
+    const items = trapHata.shoppingList.map(item => ({
+        ...item,
+        text: escapeHtml(item.text)
+    }));
+
     if (items.length === 0) {
         shoppingListEl.innerHTML = '<div class="empty-state">Список пуст</div>';
         return;
@@ -761,41 +881,6 @@ function renderShoppingList() {
     shoppingListEl.innerHTML = html;
 }
 
-function renderSearchResults(results) {
-    if (results.length === 0) {
-        searchResultsEl.innerHTML = '<div class="empty-state">Ничего не найдено</div>';
-        return;
-    }
-
-    let html = '<h3>Результаты:</h3><div class="people-list">';
-    results.forEach(person => {
-        html += `
-        <div class="person-card">
-            <div class="person-name">${person.name}</div>
-            <div>Статус: ${getStatusText(person.status)}</div>
-            ${person.note ? `<div>Заметка: ${person.note}</div>` : ''}
-        </div>
-        `;
-    });
-    html += '</div>';
-    searchResultsEl.innerHTML = html;
-}
-
-function renderDuplicates() {
-    const duplicates = trapHata.getDuplicates();
-    if (duplicates.length === 0) {
-        duplicatesListEl.innerHTML = '<div class="empty-state">Нет дубликатов</div>';
-        return;
-    }
-
-    let html = '';
-    duplicates.forEach(name => {
-        html += `<div class="duplicate-item">${name}</div>`;
-    });
-    duplicatesListEl.innerHTML = html;
-}
-
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function getStatusText(status) {
     const statusTexts = {
         active: 'Активен',
@@ -808,78 +893,55 @@ function getStatusText(status) {
 
 function filterByStatus(status) {
     currentStatusFilter = status === currentStatusFilter ? null : status;
-    
-    // Обновляем заголовок
     const statusText = currentStatusFilter ? getStatusText(currentStatusFilter) : 'Все участники';
     statusFilterTitleEl.textContent = currentStatusFilter ? `Участники: ${statusText}` : 'Все участники';
-    
-    // Обновляем статистику
     renderStats();
-    
-    // Показываем отфильтрованных участников
     renderFilteredPeople();
     
-    // Прокручиваем к списку
     if (currentStatusFilter) {
         filteredPeopleListEl.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
-// ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
-document.getElementById('search-btn').addEventListener('click', function() {
-    const query = document.getElementById('search-member').value.trim();
-    if (query) {
-        const results = trapHata.search(query);
-        renderSearchResults(results);
-    } else {
-        alert('Введите поисковый запрос!');
-    }
-});
-
-document.getElementById('reset-search-btn').addEventListener('click', function() {
-    document.getElementById('search-member').value = '';
-    searchResultsEl.innerHTML = '';
-});
-
-document.getElementById('add-item-btn').addEventListener('click', async function() {
-    const text = document.getElementById('new-item').value.trim();
-    if (text) {
-        await trapHata.addShoppingItem(text);
-        document.getElementById('new-item').value = '';
-    } else {
-        alert('Введите название покупки!');
-    }
-});
-
-tabs.forEach(tab => {
-    tab.addEventListener('click', function() {
-        const tabId = this.getAttribute('data-tab');
-        tabs.forEach(t => t.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-        document.getElementById(`${tabId}-tab`).classList.add('active');
-        currentTab = tabId;
-        
-        if (tabId === 'stats') {
-            renderStats();
-            renderDuplicates();
-        }
-    });
-});
-
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', function() {
-    // Добавляем возможность добавлять покупку по нажатию Enter
+    // Глобальные обработчики
+    document.getElementById('add-item-btn').addEventListener('click', async function() {
+        const text = document.getElementById('new-item').value.trim();
+        if (text) {
+            await trapHata.addShoppingItem(text);
+            document.getElementById('new-item').value = '';
+        } else {
+            alert('Введите название покупки!');
+        }
+    });
+
     document.getElementById('new-item').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             document.getElementById('add-item-btn').click();
         }
     });
-    
+
+    // Инициализация вкладок
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+            currentTab = tabId;
+            
+            if (tabId === 'stats') {
+                renderStats();
+            }
+        });
+    });
+
     // Первоначальная загрузка
     renderStats();
 });
 
-// ==================== ГЛОБАЛЬНЫЕ ФУНКЦИИ ====================
+// Глобальные функции
 window.trapHata = trapHata;
 window.filterByStatus = filterByStatus;
