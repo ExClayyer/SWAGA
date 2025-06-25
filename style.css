@@ -1,0 +1,544 @@
+:root {
+    --bg-color: #000;
+    --text-color: #fff;
+    --accent-color: #fff;
+    --secondary-color: #666;
+    --card-bg: #111;
+    --input-bg: #222;
+    --success-color: #0f0;
+    --warning-color: #ff0;
+    --danger-color: #f00;
+    --legend-color: #ff00ff;
+    --unknown-color: #aaa;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Courier New', monospace;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: url('https://avatars.mds.yandex.net/i?id=9d360f0d0e8ffef3960054970848dc1e_l-9211032-images-thumbs&n=13');
+    background-size:cover;
+    background-position: 0px 0px;
+    background-repeat: no-repeat;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    padding: 1rem 0;
+}
+
+h1 {
+    font-size: 3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5rem;
+    position: relative;
+    display: inline-block;
+    animation: glitch 2s infinite alternate;
+}
+
+h1::after {
+    content: 'ТРЭП ХАТА';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--accent-color);
+    clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+    animation: glitch-top 1s infinite alternate;
+}
+
+h1::before {
+    content: 'ТРЭП ХАТА';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--accent-color);
+    clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+    animation: glitch-bottom 1.5s infinite alternate;
+}
+
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+
+@keyframes glitch-top {
+    0% { transform: translate(0); }
+    20% { transform: translate(-1px, 1px); }
+    40% { transform: translate(-1px, -1px); }
+    60% { transform: translate(1px, 1px); }
+    80% { transform: translate(1px, -1px); }
+    100% { transform: translate(0); }
+}
+
+@keyframes glitch-bottom {
+    0% { transform: translate(0); }
+    20% { transform: translate(-1px, 1px); }
+    40% { transform: translate(-1px, -1px); }
+    60% { transform: translate(1px, 1px); }
+    80% { transform: translate(1px, -1px); }
+    100% { transform: translate(0); }
+}
+
+.section {
+    background-color: var(--card-bg);
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2);
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+h2::before {
+    content: '//';
+    margin-right: 0.5rem;
+    color: var(--accent-color);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: var(--input-bg);
+    border: 1px solid var(--secondary-color);
+    color: var(--text-color);
+    border-radius: 3px;
+    transition: border-color 0.3s;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+button {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+button:hover {
+    background-color: var(--text-color);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 10px rgba(255, 255, 255, 0.2);
+}
+
+button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+button:hover::after {
+    left: 100%;
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    color: var(--bg-color);
+}
+
+.btn-warning {
+    background-color: var(--warning-color);
+    color: var(--bg-color);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: var(--bg-color);
+}
+
+.btn-legend {
+    background-color: var(--legend-color);
+    color: var(--bg-color);
+}
+
+.btn-unknown {
+    background-color: var(--unknown-color);
+    color: var(--bg-color);
+}
+
+.people-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.person-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    padding: 1rem;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.person-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+}
+
+.person-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background-color: var(--secondary-color);
+}
+
+.person-card.active::before {
+    background-color: var(--success-color);
+}
+
+.person-card.banned::before {
+    background-color: var(--danger-color);
+}
+
+.person-card.inactive::before {
+    background-color: var(--warning-color);
+}
+
+.person-card.legend::before {
+    background-color: var(--legend-color);
+    animation: pulse 2s infinite;
+}
+
+.person-card.unknown::before {
+    background-color: var(--unknown-color);
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.person-name {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.person-id {
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+}
+
+.person-note {
+    font-style: italic;
+    margin: 0.5rem 0;
+    color: var(--secondary-color);
+}
+
+.person-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background-color: rgba(0, 255, 0, 0.1);
+    color: var(--success-color);
+}
+
+.status-banned {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: var(--danger-color);
+}
+
+.status-inactive {
+    background-color: rgba(255, 255, 0, 0.1);
+    color: var(--warning-color);
+}
+
+.status-legend {
+    background-color: rgba(255, 0, 255, 0.1);
+    color: var(--legend-color);
+    animation: pulse-text 2s infinite;
+}
+
+.status-unknown {
+    background-color: rgba(128, 128, 128, 0.1);
+    color: var(--unknown-color);
+}
+
+@keyframes pulse-text {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.person-join-date {
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+    margin-top: 0.5rem;
+}
+
+.person-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.person-actions button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    flex-grow: 1;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.shopping-list {
+    margin-top: 1rem;
+}
+
+.shopping-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--secondary-color);
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.shopping-item:last-child {
+    border-bottom: none;
+}
+
+.shopping-item-text {
+    flex-grow: 1;
+}
+
+.shopping-item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.shopping-item-actions button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--secondary-color);
+    font-style: italic;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 1px solid var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
+.tab {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    position: relative;
+}
+
+.tab.active {
+    font-weight: bold;
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--accent-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.5s;
+}
+
+.duplicates-list {
+    margin-top: 1rem;
+}
+
+.duplicate-item {
+    display: inline-block;
+    background-color: var(--card-bg);
+    border: 1px solid var(--secondary-color);
+    border-radius: 3px;
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    animation: pulse 2s infinite;
+}
+
+.search-results {
+    margin-top: 1rem;
+}
+
+.no-results {
+    text-align: center;
+    padding: 1rem;
+    color: var(--secondary-color);
+    font-style: italic;
+}
+
+.add-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--card-bg);
+    border: 2px dashed var(--secondary-color);
+    border-radius: 5px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    min-height: 200px;
+}
+
+.add-card:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-5px);
+}
+
+.add-card::before {
+    content: '+';
+    font-size: 3rem;
+    color: var(--secondary-color);
+}
+
+.add-card:hover::before {
+    color: var(--accent-color);
+}
+
+@media (max-width: 768px) {
+    .people-list {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+}
+
+.loader {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--secondary-color);
+    border-radius: 50%;
+    border-top-color: var(--accent-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
