@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Трэп Хата</title>
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #fff;
+            --accent-color: #fff;
+            --secondary-color: #666;
+            --card-bg: #111;
+            --input-bg: #222;
+            --success-color: #0f0;
+            --warning-color: #ff0;
+            --danger-color: #f00;
+            --legend-color: #ff00ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            padding: 1rem 0;
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5rem;
+            position: relative;
+            display: inline-block;
+            animation: glitch 2s infinite alternate;
+        }
+
+        h1::after {
+            content: 'ТРЭП ХАТА';
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--accent-color);
+            clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+            animation: glitch-top 1s infinite alternate;
+        }
+
+        h1::before {
+            content: 'ТРЭП ХАТА';
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--accent-color);
+            clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+            animation: glitch-bottom 1.5s infinite alternate;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes glitch-top {
+            0% { transform: translate(0); }
+            20% { transform: translate(-1px, 1px); }
+            40% { transform: translate(-1px, -1px); }
+            60% { transform: translate(1px, 1px); }
+            80% { transform: translate(1px, -1px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes glitch-bottom {
+            0% { transform: translate(0); }
+            20% { transform: translate(-1px, 1px); }
+            40% { transform: translate(-1px, -1px); }
+            60% { transform: translate(1px, 1px); }
+            80% { transform: translate(1px, -1px); }
+            100% { transform: translate(0); }
+        }
+
+        .section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        h2::before {
+            content: '//';
+            margin-right: 0.5rem;
+            color: var(--accent-color);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--input-bg);
+            border: 1px solid var(--secondary-color);
+            color: var(--text-color);
+            border-radius: 3px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background-color: var(--text-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(255, 255, 255, 0.2);
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        button:hover::after {
+            left: 100%;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: var(--bg-color);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: var(--bg-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: var(--bg-color);
+        }
+
+        .btn-legend {
+            background-color: var(--legend-color);
+            color: var(--bg-color);
+        }
+
+        .people-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .person-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            padding: 1rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .person-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .person-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background-color: var(--secondary-color);
+        }
+
+        .person-card.active::before {
+            background-color: var(--success-color);
+        }
+
+        .person-card.banned::before {
+            background-color: var(--danger-color);
+        }
+
+        .person-card.inactive::before {
+            background-color: var(--warning-color);
+        }
+
+        .person-card.legend::before {
+            background-color: var(--legend-color);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .person-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .person-id {
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+        }
+
+        .person-note {
+            font-style: italic;
+            margin: 0.5rem 0;
+            color: var(--secondary-color);
+        }
+
+        .person-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background-color: rgba(0, 255, 0, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-banned {
+            background-color: rgba(255, 0, 0, 0.1);
+            color: var(--danger-color);
+        }
+
+        .status-inactive {
+            background-color: rgba(255, 255, 0, 0.1);
+            color: var(--warning-color);
+        }
+
+        .status-legend {
+            background-color: rgba(255, 0, 255, 0.1);
+            color: var(--legend-color);
+            animation: pulse-text 2s infinite;
+        }
+
+        @keyframes pulse-text {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .person-join-date {
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+            margin-top: 0.5rem;
+        }
+
+        .person-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .person-actions button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            flex-grow: 1;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+        }
+
+        .shopping-list {
+            margin-top: 1rem;
+        }
+
+        .shopping-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--secondary-color);
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .shopping-item:last-child {
+            border-bottom: none;
+        }
+
+        .shopping-item-text {
+            flex-grow: 1;
+        }
+
+        .shopping-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .shopping-item-actions button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--secondary-color);
+            font-style: italic;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .tab.active {
+            font-weight: bold;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        .duplicates-list {
+            margin-top: 1rem;
+        }
+
+        .duplicate-item {
+            display: inline-block;
+            background-color: var(--card-bg);
+            border: 1px solid var(--secondary-color);
+            border-radius: 3px;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            animation: pulse 2s infinite;
+        }
+
+        .search-results {
+            margin-top: 1rem;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 1rem;
+            color: var(--secondary-color);
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .people-list {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Анимация загрузки */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--secondary-color);
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Трэп Хата</h1>
+        </header>
+
+        <div class="section">
+            <div class="tabs">
+                <div class="tab active" data-tab="members">Участники</div>
+                <div class="tab" data-tab="shopping">Список покупок</div>
+                <div class="tab" data-tab="stats">Статистика</div>
+            </div>
+
+            <div class="tab-content active" id="members-tab">
+                <div class="form-group">
+                    <label for="search-member">Поиск участника:</label>
+                    <input type="text" id="search-member" placeholder="Введите имя или заметку...">
+                </div>
+                <button id="search-btn">Найти</button>
+                <button id="reset-search-btn">Сбросить</button>
+
+                <div class="search-results" id="search-results"></div>
+
+                <h2>Все участники</h2>
+                <div class="people-list" id="people-list"></div>
+            </div>
+
+            <div class="tab-content" id="shopping-tab">
+                <h2>Список покупок</h2>
+                <div class="form-group">
+                    <label for="new-item">Добавить покупку:</label>
+                    <input type="text" id="new-item" placeholder="Что нужно купить?">
+                </div>
+                <button id="add-item-btn">Добавить</button>
+
+                <div class="shopping-list" id="shopping-list">
+                    <div class="empty-state">Список покупок пуст</div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="stats-tab">
+                <h2>Статистика хаты</h2>
+                <div class="stats-grid" id="stats-grid"></div>
+
+                <h2>Повторяющиеся имена</h2>
+                <div class="duplicates-list" id="duplicates-list">
+                    <div class="empty-state">Нет повторяющихся имен</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Добавить участника</h2>
+            <div class="form-group">
+                <label for="new-name">Имя:</label>
+                <input type="text" id="new-name" placeholder="Введите имя">
+            </div>
+            <div class="form-group">
+                <label for="new-note">Заметка:</label>
+                <input type="text" id="new-note" placeholder="Заметка (необязательно)">
+            </div>
+            <div class="form-group">
+                <label for="new-status">Статус:</label>
+                <select id="new-status">
+                    <option value="active">Активный</option>
+                    <option value="inactive">Неактивный</option>
+                    <option value="banned">Забанен</option>
+                    <option value="legend">Легенда</option>
+                </select>
+            </div>
+            <button id="add-person-btn">Добавить участника</button>
+        </div>
+
+        <div class="section">
+            <h2>Управление участником</h2>
+            <div class="form-group">
+                <label for="edit-id">ID участника:</label>
+                <input type="number" id="edit-id" placeholder="Введите ID">
+            </div>
+            <div class="form-group">
+                <label for="edit-note">Новая заметка:</label>
+                <input type="text" id="edit-note" placeholder="Новая заметка">
+            </div>
+            <div class="form-group">
+                <label for="edit-status">Новый статус:</label>
+                <select id="edit-status">
+                    <option value="active">Активный</option>
+                    <option value="inactive">Неактивный</option>
+                    <option value="banned">Забанен</option>
+                    <option value="legend">Легенда</option>
+                </select>
+            </div>
+            <button id="update-person-btn">Обновить данные</button>
+            <button id="remove-person-btn" class="btn-danger">Удалить участника</button>
+        </div>
+    </div>
+
+<script>
+        class PeopleList {
+            constructor() {
+                // Пробуем загрузить данные из localStorage
+                const savedPeople = localStorage.getItem('trapHata_people');
+                const savedShopping = localStorage.getItem('trapHata_shopping');
+                
+                this.people = savedPeople ? JSON.parse(savedPeople) : [
+                    { id: 1, name: 'Гриша', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 2, name: 'кирил', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 3, name: 'кирил', note: '', status: 'banned', joinDate: '2025-26-06' },
+                    { id: 4, name: 'рома', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 5, name: 'рома', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 6, name: 'саня', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 7, name: 'денис', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 8, name: 'денис', note: '', status: 'inactive', joinDate: '2025-26-06' },
+                    { id: 9, name: 'вова', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 10, name: 'вова', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 11, name: 'зонов', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 12, name: 'цой', note: '', status: 'legend', joinDate: '2025-26-06' },
+                    { id: 13, name: 'павлик', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 14, name: 'костя', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 15, name: 'андрей', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 16, name: 'андрей', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 17, name: 'наташа', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 18, name: 'оксана', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 19, name: 'лиза', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 20, name: 'виоллета', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 21, name: 'юля', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 22, name: 'варя', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 23, name: 'сабрина', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 24, name: 'даша', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 25, name: 'вика', note: '', status: 'active', joinDate: '2025-26-06' },
+                    { id: 26, name: 'ева', note: '', status: 'active', joinDate: '2025-26-06' }
+                ];
+                
+                this.shoppingList = savedShopping ? JSON.parse(savedShopping) : [
+                    { id: 1, text: 'Кола', completed: false },
+                    { id: 2, text: 'Чипсы', completed: false },
+                    { id: 3, text: 'Пиво', completed: true }
+                ];
+                
+                // Сохраняем начальные данные, если их не было
+                if (!savedPeople) this.savePeople();
+                if (!savedShopping) this.saveShopping();
+            }
+
+            // Методы для сохранения данных
+            savePeople() {
+                localStorage.setItem('trapHata_people', JSON.stringify(this.people));
+            }
+
+            saveShopping() {
+                localStorage.setItem('trapHata_shopping', JSON.stringify(this.shoppingList));
+            }
+
+            // Основные методы
+            getAll() {
+                return this.people;
+            }
+
+            getById(id) {
+                return this.people.find(person => person.id === id);
+            }
+
+            getByName(name) {
+                return this.people.filter(person => 
+                    person.name.toLowerCase().includes(name.toLowerCase())
+                );
+            }
+
+            getWithNoteXZ() {
+                return this.people.filter(person => person.note === 'хз');
+            }
+
+            addPerson(name, note = '', status = 'active') {
+                const newId = this.people.length > 0 ? Math.max(...this.people.map(p => p.id)) + 1 : 1;
+                const newPerson = {
+                    id: newId,
+                    name,
+                    note,
+                    status,
+                    joinDate: new Date().toISOString().split('T')[0]
+                };
+                this.people.push(newPerson);
+                this.savePeople();
+                return newPerson;
+            }
+
+            removeById(id) {
+                this.people = this.people.filter(person => person.id !== id);
+                this.savePeople();
+                return this.people;
+            }
+
+            // Дополнительные методы
+            updatePerson(id, updates) {
+                const index = this.people.findIndex(person => person.id === id);
+                if (index !== -1) {
+                    this.people[index] = { ...this.people[index], ...updates };
+                    this.savePeople();
+                    return this.people[index];
+                }
+                return null;
+            }
+
+            changeStatus(id, newStatus) {
+                return this.updatePerson(id, { status: newStatus });
+            }
+
+            addNote(id, note) {
+                return this.updatePerson(id, { note });
+            }
+
+            getActiveMembers() {
+                return this.people.filter(person => person.status === 'active');
+            }
+
+            getBannedMembers() {
+                return this.people.filter(person => person.status === 'banned');
+            }
+
+            getLegends() {
+                return this.people.filter(person => person.status === 'legend');
+            }
+
+            getRecentMembers(days = 30) {
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - days);
+                return this.people.filter(person => {
+                    const joinDate = new Date(person.joinDate);
+                    return joinDate >= cutoffDate;
+                });
+            }
+
+            search(query) {
+                return this.people.filter(person => 
+                    person.name.toLowerCase().includes(query.toLowerCase()) ||
+                    (person.note && person.note.toLowerCase().includes(query.toLowerCase()))
+                );
+            }
+
+            getStats() {
+                return {
+                    total: this.people.length,
+                    active: this.getActiveMembers().length,
+                    banned: this.getBannedMembers().length,
+                    legends: this.getLegends().length,
+                    xz: this.getWithNoteXZ().length,
+                    recent: this.getRecentMembers().length
+                };
+            }
+
+            getDuplicates() {
+                const nameCounts = {};
+                this.people.forEach(person => {
+                    nameCounts[person.name] = (nameCounts[person.name] || 0) + 1;
+                });
+                
+                return Object.entries(nameCounts)
+                    .filter(([name, count]) => count > 1)
+                    .map(([name]) => name);
+            }
+
+            // Методы для списка покупок
+            getShoppingList() {
+                return this.shoppingList;
+            }
+
+            addShoppingItem(text) {
+                const newId = this.shoppingList.length > 0 ? Math.max(...this.shoppingList.map(item => item.id)) + 1 : 1;
+                const newItem = {
+                    id: newId,
+                    text,
+                    completed: false
+                };
+                this.shoppingList.push(newItem);
+                this.saveShopping();
+                return newItem;
+            }
+
+            removeShoppingItem(id) {
+                this.shoppingList = this.shoppingList.filter(item => item.id !== id);
+                this.saveShopping();
+                return this.shoppingList;
+            }
+
+            toggleShoppingItem(id) {
+                const item = this.shoppingList.find(item => item.id === id);
+                if (item) {
+                    item.completed = !item.completed;
+                    this.saveShopping();
+                }
+                return item;
+            }
+        }
+
+        // Инициализация приложения
+        const trapHata = new PeopleList();
+        let currentTab = 'members';
+
+        // DOM элементы
+        const peopleListEl = document.getElementById('people-list');
+        const searchResultsEl = document.getElementById('search-results');
+        const shoppingListEl = document.getElementById('shopping-list');
+        const statsGridEl = document.getElementById('stats-grid');
+        const duplicatesListEl = document.getElementById('duplicates-list');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Функции рендеринга
+        function renderPeopleList(people) {
+            if (people.length === 0) {
+                peopleListEl.innerHTML = '<div class="empty-state">Нет участников</div>';
+                return;
+            }
+
+            peopleListEl.innerHTML = '';
+            people.forEach(person => {
+                const statusClass = `status-${person.status}`;
+                const statusText = {
+                    active: '100%',
+                    inactive: 'ХЗ',
+                    banned: 'Забанен',
+                    legend: ''
+                }[person.status];
+
+                const personEl = document.createElement('div');
+                personEl.className = `person-card ${person.status}`;
+                personEl.innerHTML = `
+                    <div class="person-name">
+                        ${person.name}
+                        <span class="person-id">#${person.id}</span>
+                    </div>
+                    ${person.note ? `<div class="person-note">${person.note}</div>` : ''}
+                    <div class="person-status ${statusClass}">${statusText}</div>
+                    <div class="person-join-date">В хате с ${person.joinDate}</div>
+                    <div class="person-actions">
+                        <button data-id="${person.id}" data-action="status" data-status="active" class="btn-success">100%</button>
+                        <button data-id="${person.id}" data-action="status" data-status="inactive" class="btn-warning">ХЗ</button>
+                        <button data-id="${person.id}" data-action="status" data-status="banned" class="btn-danger">Бан</button>
+                        <button data-id="${person.id}" data-action="status" data-status="legend" class="btn-legend">-----</button>
+                    </div>
+                `;
+                peopleListEl.appendChild(personEl);
+            });
+
+            // Добавляем обработчики событий для кнопок
+            document.querySelectorAll('[data-action="status"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    const status = this.getAttribute('data-status');
+                    trapHata.changeStatus(id, status);
+                    renderPeopleList(trapHata.getAll());
+                });
+            });
+        }
+
+        function renderSearchResults(results) {
+            if (results.length === 0) {
+                searchResultsEl.innerHTML = '<div class="no-results">Ничего не найдено</div>';
+                return;
+            }
+
+            searchResultsEl.innerHTML = '<h3>Результаты поиска:</h3>';
+            const resultsContainer = document.createElement('div');
+            resultsContainer.className = 'people-list';
+            
+            results.forEach(person => {
+                const statusClass = `status-${person.status}`;
+                const statusText = {
+                    active: 'Активный',
+                    inactive: 'Неактивный',
+                    banned: 'Забанен',
+                    legend: 'Легенда'
+                }[person.status];
+
+                const personEl = document.createElement('div');
+                personEl.className = `person-card ${person.status}`;
+                personEl.innerHTML = `
+                    <div class="person-name">
+                        ${person.name}
+                        <span class="person-id">#${person.id}</span>
+                    </div>
+                    ${person.note ? `<div class="person-note">${person.note}</div>` : ''}
+                    <div class="person-status ${statusClass}">${statusText}</div>
+                    <div class="person-join-date">В хате с ${person.joinDate}</div>
+                `;
+                resultsContainer.appendChild(personEl);
+            });
+
+            searchResultsEl.appendChild(resultsContainer);
+        }
+
+        function renderShoppingList() {
+            const items = trapHata.getShoppingList();
+            if (items.length === 0) {
+                shoppingListEl.innerHTML = '<div class="empty-state">Список покупок пуст</div>';
+                return;
+            }
+
+            shoppingListEl.innerHTML = '';
+            items.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = `shopping-item ${item.completed ? 'completed' : ''}`;
+                itemEl.innerHTML = `
+                    <div class="shopping-item-text" style="${item.completed ? 'text-decoration: line-through; opacity: 0.7;' : ''}">
+                        ${item.text}
+                    </div>
+                    <div class="shopping-item-actions">
+                        <button data-id="${item.id}" data-action="toggle" class="${item.completed ? 'btn-success' : 'btn-warning'}">
+                            ${item.completed ? '✓' : '✗'}
+                        </button>
+                        <button data-id="${item.id}" data-action="remove" class="btn-danger">Удалить</button>
+                    </div>
+                `;
+                shoppingListEl.appendChild(itemEl);
+            });
+
+            // Добавляем обработчики событий
+            document.querySelectorAll('[data-action="toggle"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    trapHata.toggleShoppingItem(id);
+                    renderShoppingList();
+                });
+            });
+
+            document.querySelectorAll('[data-action="remove"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    trapHata.removeShoppingItem(id);
+                    renderShoppingList();
+                });
+            });
+        }
+
+        function renderStats() {
+            const stats = trapHata.getStats();
+            statsGridEl.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total}</div>
+                    <div class="stat-label">Всего</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.active}</div>
+                    <div class="stat-label">Активных</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.banned}</div>
+                    <div class="stat-label">Забанено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.legends}</div>
+                    <div class="stat-label">Легенд</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.xz}</div>
+                    <div class="stat-label">ХЗ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.recent}</div>
+                    <div class="stat-label">Новых (30 дн.)</div>
+                </div>
+            `;
+        }
+
+        function renderDuplicates() {
+            const duplicates = trapHata.getDuplicates();
+            if (duplicates.length === 0) {
+                duplicatesListEl.innerHTML = '<div class="empty-state">Нет повторяющихся имен</div>';
+                return;
+            }
+
+            duplicatesListEl.innerHTML = '';
+            duplicates.forEach(name => {
+                const duplicateEl = document.createElement('div');
+                duplicateEl.className = 'duplicate-item';
+                duplicateEl.textContent = name;
+                duplicatesListEl.appendChild(duplicateEl);
+            });
+        }
+
+        // Обработчики событий
+        document.getElementById('add-person-btn').addEventListener('click', function() {
+            const name = document.getElementById('new-name').value.trim();
+            const note = document.getElementById('new-note').value.trim();
+            const status = document.getElementById('new-status').value;
+
+            if (name) {
+                trapHata.addPerson(name, note, status);
+                document.getElementById('new-name').value = '';
+                document.getElementById('new-note').value = '';
+                renderPeopleList(trapHata.getAll());
+            }
+        });
+
+        document.getElementById('update-person-btn').addEventListener('click', function() {
+            const id = parseInt(document.getElementById('edit-id').value);
+            const note = document.getElementById('edit-note').value.trim();
+            const status = document.getElementById('edit-status').value;
+
+            if (id) {
+                const updates = {};
+                if (note) updates.note = note;
+                if (status) updates.status = status;
+                
+                trapHata.updatePerson(id, updates);
+                document.getElementById('edit-id').value = '';
+                document.getElementById('edit-note').value = '';
+                renderPeopleList(trapHata.getAll());
+            }
+        });
+
+        document.getElementById('remove-person-btn').addEventListener('click', function() {
+            const id = parseInt(document.getElementById('edit-id').value);
+            if (id) {
+                trapHata.removeById(id);
+                document.getElementById('edit-id').value = '';
+                renderPeopleList(trapHata.getAll());
+            }
+        });
+
+        document.getElementById('search-btn').addEventListener('click', function() {
+            const query = document.getElementById('search-member').value.trim();
+            if (query) {
+                const results = trapHata.search(query);
+                renderSearchResults(results);
+            }
+        });
+
+        document.getElementById('reset-search-btn').addEventListener('click', function() {
+            document.getElementById('search-member').value = '';
+            searchResultsEl.innerHTML = '';
+        });
+
+        document.getElementById('add-item-btn').addEventListener('click', function() {
+            const text = document.getElementById('new-item').value.trim();
+            if (text) {
+                trapHata.addShoppingItem(text);
+                document.getElementById('new-item').value = '';
+                renderShoppingList();
+            }
+        });
+
+        // Переключение вкладок
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // Убираем активный класс у всех вкладок и контента
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Добавляем активный класс текущей вкладке и контенту
+                this.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+                currentTab = tabId;
+                
+                // При переключении на вкладку статистики обновляем данные
+                if (tabId === 'stats') {
+                    renderStats();
+                    renderDuplicates();
+                }
+            });
+        });
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPeopleList(trapHata.getAll());
+            renderShoppingList();
+            
+            // Добавляем возможность добавлять покупку по нажатию Enter
+            document.getElementById('new-item').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('add-item-btn').click();
+                }
+            });
+            
+            // Добавляем возможность добавлять участника по нажатию Enter
+            document.getElementById('new-name').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('add-person-btn').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
